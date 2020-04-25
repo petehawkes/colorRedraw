@@ -30,9 +30,9 @@ public void setup() {
   video.start();  
   int count = video.width * video.height;
   redraw = new boolean[count];
-  
+
   println(count);
-  
+
   noStroke();
 }
 
@@ -49,10 +49,10 @@ void draw() {
 
   int index = 0;
   int inc = 1;
-  
+
   scale(width/video.width, height/video.height);
   //scale(-1,1);
-  
+
   video.loadPixels();
   for (int y = 0; y < video.height; y+=inc) {
 
@@ -69,24 +69,24 @@ void draw() {
       // Or you could instead red + green + blue, and make the the values[] array
       // 256*3 elements long instead of just 256.
       int pixelBright = max(_r, _g, _b);
-      
+
       int xFlip = video.width-x-(video.width%inc);
       if (video.width%inc == 0) {
         xFlip -= inc;
       } 
-      
-      if (x==0 && y==0) hue = saturation(pixelColor);
+
+      boolean isColor = hueWithinRange(pixelColor, 23, 5);
+
      
-      if (hueWithinRange(pixelColor, 23, 1)) redraw[index] = true;
-      if (!redraw[index]) {
+      if (!redraw[index] || isColor) {
         fill(pixelColor);
         rect(xFlip, y, inc, inc);
       }
+      if (isColor) redraw[index] = true;
 
+      if (x==0 && y==0) hue = saturation(pixelColor);
       index++;
-      
     }
-
   }
 
   popMatrix();
@@ -101,13 +101,13 @@ void draw() {
 boolean hueWithinRange (int clr, float midhue, float range) {
   float h = hue(clr);
   if (h > midhue - range && h < midhue + range) {
-    if (saturation(clr) > 80) {
+    if (saturation(clr) > 100 && brightness(clr) > 80) {
       return true;
     } else {
       return false;
     }
   } else {
-    return false; 
+    return false;
   }
 }
 
@@ -120,8 +120,14 @@ boolean hueWithinRange (int clr, float midhue, float range) {
  */
 public void keyPressed() {
   switch (key) {
-    case 'g': saveFrame(); break;
-    case 'c': cheatScreen = !cheatScreen; break;
-    case ' ': println(hue);
+  case 'g': 
+    saveFrame(); 
+    break;
+  case 'c': 
+    cheatScreen = !cheatScreen; 
+    break;
+  case ' ': 
+    println(hue);
+    break;
   }
 }
