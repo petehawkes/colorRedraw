@@ -16,7 +16,9 @@ import processing.video.*;
 Capture video;
 boolean cheatScreen;
 
-int clr;
+boolean[] redraw;
+
+float hue;
 
 public void setup() {
   //size(640, 480, P3D);
@@ -27,6 +29,8 @@ public void setup() {
   video = new Capture(this, 160, 120);
   video.start();  
   int count = video.width * video.height;
+  redraw = new boolean[count];
+  
   println(count);
   
   noStroke();
@@ -39,7 +43,7 @@ public void captureEvent(Capture c) {
 
 
 void draw() {
-  background(0);
+  //background(0);
 
   pushMatrix();
 
@@ -56,19 +60,28 @@ void draw() {
 
       int pixelColor = video.pixels[index];
       // Faster method of calculating r, g, b than red(), green(), blue() 
-      int r = (pixelColor >> 16) & 0xff;
-      int g = (pixelColor >> 8) & 0xff;
-      int b = pixelColor & 0xff;
+      int _r = (pixelColor >> 16) & 0xff;
+      int _g = (pixelColor >> 8) & 0xff;
+      int _b = pixelColor & 0xff;
 
       // Another option would be to properly calculate brightness as luminance:
       // luminance = 0.3*red + 0.59*green + 0.11*blue
       // Or you could instead red + green + blue, and make the the values[] array
       // 256*3 elements long instead of just 256.
-      int pixelBright = max(r, g, b);
+      int pixelBright = max(_r, _g, _b);
       
-      fill(pixelColor);
-      if (x==0 && y==0) clr = pixelColor;
-      rect(x, y, inc, inc);
+      int xFlip = video.width-x-(video.width%inc);
+      if (video.width%inc == 0) {
+        xFlip -= inc;
+      } 
+      
+      if (x==0 && y==0) hue = saturation(pixelColor);
+     
+      if (hueWithinRange(pixelColor, 23, 1)) redraw[index] = true;
+      if (!redraw[index]) {
+        fill(pixelColor);
+        rect(xFlip, y, inc, inc);
+      }
 
       index++;
       
@@ -85,6 +98,19 @@ void draw() {
   }
 }
 
+boolean hueWithinRange (int clr, float midhue, float range) {
+  float h = hue(clr);
+  if (h > midhue - range && h < midhue + range) {
+    if (saturation(clr) > 80) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false; 
+  }
+}
+
 
 /**
  * Handle key presses:
@@ -96,6 +122,6 @@ public void keyPressed() {
   switch (key) {
     case 'g': saveFrame(); break;
     case 'c': cheatScreen = !cheatScreen; break;
-    case ' ': println(clr);
+    case ' ': println(hue);
   }
 }
